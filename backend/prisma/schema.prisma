@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  avatarUrl     String?  @map("avatar_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  refreshTokens   RefreshToken[]
+  jobApplications JobApplication[]
+  learningItems   LearningItem[]
+  dsaProblems     DsaProblem[]
+  countries       Country[]
+  documents       Document[]
+  skillProfile    SkillProfile?
+  atsChecks       AtsCheck[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model JobApplication {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  company        String
+  position       String
+  location       String?
+  jobUrl         String?   @map("job_url")
+  salaryMin      Int?      @map("salary_min")
+  salaryMax      Int?      @map("salary_max")
+  salaryCurrency String    @default("USD") @map("salary_currency")
+  status         String    @default("saved")
+  appliedDate    DateTime? @map("applied_date")
+  notes          String?
+  resumeUrl      String?   @map("resume_url")
+  scrapedData    Json?     @map("scraped_data")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviews JobInterview[]
+
+  @@map("job_applications")
+}
+
+model JobInterview {
+  id          String    @id @default(uuid())
+  jobId       String    @map("job_id")
+  round       String
+  scheduledAt DateTime? @map("scheduled_at")
+  notes       String?
+  outcome     String    @default("pending")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  job JobApplication @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@map("job_interviews")
+}
+
+model LearningItem {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  category   String
+  title      String
+  platform   String?
+  url        String?
+  progress   Int       @default(0)
+  status     String    @default("not_started")
+  priority   String    @default("medium")
+  targetDate DateTime? @map("target_date")
+  notes      String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("learning_items")
+}
+
+model DsaProblem {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  title        String
+  platform     String?
+  url          String?
+  difficulty   String?
+  topic        String?
+  status       String    @default("todo")
+  timeTakenMin Int?      @map("time_taken_min")
+  notes        String?
+  solvedAt     DateTime? @map("solved_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dsa_problems")
+}
+
+model Country {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  priority  Int      @default(0)
+  status    String   @default("researching")
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pathways  Pathway[]
+  documents Document[]
+
+  @@map("countries")
+}
+
+model Pathway {
+  id           String   @id @default(uuid())
+  countryId    String   @map("country_id")
+  type         String
+  requirements Json?
+  timeline     String?
+  costEstimate String?  @map("cost_estimate")
+  status       String   @default("researching")
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  country Country @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
+  @@map("pathways")
+}
+
+model Document {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  countryId  String?   @map("country_id")
+  name       String
+  filePath   String    @map("file_path")
+  fileType   String?   @map("file_type")
+  fileSize   Int?      @map("file_size")
+  category   String?
+  expiryDate DateTime? @map("expiry_date")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country       Country?      @relation(fields: [countryId], references: [id], onDelete: SetNull)
+  skillProfiles SkillProfile[]
+  atsChecks     AtsCheck[]
+
+  @@map("documents")
+}
+
+model SkillProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id")
+  documentId  String   @map("document_id")
+  skills      String[]
+  rawText     String?  @map("raw_text")
+  extractedAt DateTime @default(now()) @map("extracted_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("skill_profiles")
+}
+
+model AtsCheck {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  documentId      String   @map("document_id")
+  jobDescription  String   @map("job_description")
+  score           Int
+  matchedKeywords String[] @map("matched_keywords")
+  missingKeywords String[] @map("missing_keywords")
+  suggestions     String[]
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("ats_checks")
+}
