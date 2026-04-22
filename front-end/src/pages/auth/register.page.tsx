@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '@/hooks/use-auth';
 
 export function RegisterPage() {
@@ -10,7 +11,7 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,8 +19,11 @@ export function RegisterPage() {
     setLoading(true);
     try {
       await register({ name, email, password });
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Registration failed');
+    } catch (err) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.error?.message ?? 'Registration failed'
+        : 'Registration failed';
+      setError(message);
     } finally {
       setLoading(false);
     }

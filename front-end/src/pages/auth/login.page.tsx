@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '@/hooks/use-auth';
 
 export function LoginPage() {
@@ -9,7 +10,7 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,8 +18,11 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login({ email, password });
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Login failed');
+    } catch (err) {
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.error?.message ?? 'Login failed'
+        : 'Login failed';
+      setError(message);
     } finally {
       setLoading(false);
     }

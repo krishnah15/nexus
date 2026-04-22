@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
 
 const navItems = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/jobs', icon: Briefcase, label: 'Job Tracker' },
   { to: '/ats', icon: ScanSearch, label: 'ATS Check' },
   { to: '/job-matching', icon: Target, label: 'Job Matching' },
@@ -29,7 +29,7 @@ export function Sidebar() {
           <NavLink
             key={item.to}
             to={item.to}
-            end={item.to === '/'}
+            end={item.to === '/dashboard'}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3.5 px-4 py-3 rounded-lg text-[15px] font-medium transition-colors',
